@@ -121,7 +121,7 @@ export default ({
     // Get the first id where the delayed timestamp is <= now
     let id = await redis
       .zrangebyscore(
-        `${queuePrefix}:delayed`,
+        `${queuePrefix}:${workerId}:delayed`,
         '-inf',
         new Date().getTime(),
         'LIMIT',
