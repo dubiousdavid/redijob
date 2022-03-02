@@ -99,7 +99,7 @@ export default ({
       )
       if (delayed) {
         // Remove from delayed set
-        commands.push(['zrem', `${queuePrefix}:delayed`, id])
+        commands.push(['zrem', `${queuePrefix}:${workerId}:delayed`, id])
       }
     }
     // Retry
@@ -109,7 +109,7 @@ export default ({
       // Add job to delayed set
       commands.push([
         'zadd',
-        `${queuePrefix}:delayed`,
+        `${queuePrefix}:${workerId}:delayed`,
         addMilliseconds(new Date(), nextRetryMs),
         id,
       ])
@@ -206,7 +206,7 @@ export default ({
           }
           if (entry.delayed) {
             // Remove delayed
-            commands.push(['zrem', `${queuePrefix}:delayed`, id])
+            commands.push(['zrem', `${queuePrefix}:${workerId}:delayed`, id])
           }
           await redis.multi(commands).exec()
         } catch (error) {
@@ -257,6 +257,12 @@ export default ({
           ms('1h'),
           ...messageIds,
         ],
+        // Move delayed jobs from dead worker to new worker
+        [
+          'rename',
+          `${queuePrefix}:${deadWorkerId}:delayed`,
+          `${queuePrefix}:${newWorkerId}:delayed`,
+        ],
         // Remove dead worker
         ['zrem', `${queuePrefix}:workers`, deadWorkerId],
       ])
@@ -279,7 +285,7 @@ export default ({
     if (deadWorkerId) {
       // Get pending messages for worker
       let messageIds = await getPendingMessages(queue, deadWorkerId)
-      if (messageIds) {
+      if (_.size(messageIds)) {
         await claimAndRemoveDeadWorker(
           queue,
           deadWorkerId,
