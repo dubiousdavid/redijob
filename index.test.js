@@ -1,17 +1,17 @@
 import test from 'ava'
 import Redis from 'ioredis'
-import { worker, queue } from './index.js'
+import { worker, stream } from './index.js'
 
 let redis = new Redis()
 
-// test('should add a job with no data to queue', async (t) => {
-//   let q = queue({ redis })
+// test('should add a job with no data to stream', async (t) => {
+//   let q = stream({ redis })
 //   let id = await q.addJob('email')
 //   t.regex(id, /\d+-\d/)
 // })
 
 // test.serial('should create and destroy consumer group', async (t) => {
-//   let w = worker({ redis, queue: 'email' })
+//   let w = worker({ redis, stream: 'email' })
 //   await w.createConsumerGroupIfNotExists()
 //   await w.destroyConsumerGroup()
 //   t.pass()
@@ -22,11 +22,11 @@ test('should process job', async (t) =>
   new Promise(async (resolve) => {
     let w = worker({
       redis,
-      queue: 'email',
+      stream: 'email',
       encode: JSON.stringify,
       decode: JSON.parse,
     })
-    let q = queue({ redis, encode: JSON.stringify })
+    let q = stream({ redis, encode: JSON.stringify })
     let sentData = { from: 'david@example.com' }
     await q.addJob('email', sentData)
     await w.createConsumerGroupIfNotExists()
@@ -45,7 +45,7 @@ test('should process job', async (t) =>
 //   })
 
 // console.log(await destroyConsumerGroup('email'))
-// console.log(await redis.del('queue:email'))
+// console.log(await redis.del('stream:email'))
 // console.log(
 //   await createConsumerGroupIfNotExists('email', { readFromStart: true })
 // )
